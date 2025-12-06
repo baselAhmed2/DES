@@ -1,52 +1,51 @@
 from Crypto.Cipher import DES3
-from Crypto.Random import get_random_bytes
+from Crypto.Util.Padding import pad, unpad
+
+DEFAULT_KEY = b'1234567890123456'   # 16 bytes (default)
 
 # ================================
-# المفتاح الافتراضي لـ 3DES (لازم يكون 16 أو 24 بايت)
-DEFAULT_KEY = b'1234567812345678'  # 16 بايت
+while True:
+    choice = input("\nType E for Encryption or D for Decryption: ").lower()
 
-# ================================
-# ناخد النص من المستخدم
-text = input("Enter 8-character text: ")
+    # ================================
+    # إدخال النص
+    text = input("Enter text: ")
+    plaintext = text.encode()
 
-# لو النص أقل أو أكثر من 8 نوقف البرنامج
-if len(text) != 8:
-    print("Text must be exactly 8 characters!")
-    exit()
+    # ================================
+    # إدخال المفتاح
+    user_key = input("Enter 16 or 24-character key (or press Enter for default key): ")
 
-plaintext = text.encode()
+    if user_key == "":
+        key = DEFAULT_KEY
+        print("Using default key:", DEFAULT_KEY.decode())
+    else:
+        if len(user_key) not in [16, 24]:
+            print("Key must be exactly 16 OR 24 characters!")
+            continue
+        key = user_key.encode()
 
-# ================================
-# ناخد المفتاح من المستخدم
-user_key = input("Enter 16 or 24-character key (or press Enter to use default key): ")
+    # ================================
+    # إنشاء كائن 3DES
+    des3 = DES3.new(key, DES3.MODE_ECB)
 
-if user_key == "":
-    key = DEFAULT_KEY
-    print("Using default key:", DEFAULT_KEY)
-else:
-    if len(user_key) not in [16, 24]:
-        print("Key must be exactly 16 or 24 characters!")
-        exit()
-    key = user_key.encode()
+    # ================================
+    # التشفير
+    if choice == 'e':
+        padding = pad(plaintext, DES3.block_size)
+        ciphertext = des3.encrypt(padding)
+        print("\nEncrypted (hex):", ciphertext.hex())
 
-# ================================
-# اختيار العملية
-choice = input("Type E for Encryption or D for Decryption: ").lower()
+    # ================================
+    # فك التشفير
+    elif choice == 'd':
+        try:
+            ciphertext = bytes.fromhex(text)
+            decrypted = des3.decrypt(ciphertext)
+            unpadded = unpad(decrypted, DES3.block_size)
+            print("\nDecrypted text:", unpadded.decode())
+        except:
+            print("Invalid ciphertext! Enter a valid hex string.")
 
-# ================================
-# إنشاء كائن 3DES
-des3 = DES3.new(key, DES3.MODE_ECB)
-
-# تشفير
-if choice == 'e':
-    cipher_text = des3.encrypt(plaintext)
-    print("\nEncrypted text (bytes):", cipher_text)
-    print("Encrypted text (hex)  :", cipher_text.hex())
-
-# فك التشفير
-elif choice == 'd':
-    decrypted = des3.decrypt(plaintext)
-    print("\nDecrypted text:", decrypted.decode())
-
-else:
-    print("Invalid choice! Please enter E or D.")
+    else:
+        print("Invalid choice! Enter E or D.")

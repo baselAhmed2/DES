@@ -1,77 +1,52 @@
 from Crypto.Cipher import DES
+from Crypto.Util.Padding import pad, unpad
 
-DEFAULT_KEY = b'12345678'   # الكي الافتراضي
-
-# ================================
-# ناخد النص من المستخدم
-text = input("Enter 8-character text: ")
-
-# لو النص أقل أو أكثر من 8 نوقف البرنامج
-if len(text) != 8:
-    print("Text must be exactly 8 characters!")
-    exit()
-
-plaintext = text.encode()
-
-
-# ================================
-# ناخد المفتاح من المستخدم
-user_key = input("Enter 8-character key (or press Enter to use default key): ")
-
-if user_key == "":
-    key = DEFAULT_KEY
-    print("Using default key: 12345678")
-else:
-    if len(user_key) != 8:
-        print("Key must be exactly 8 characters!")
-        exit()
-    key = user_key.encode()
-
+DEFAULT_KEY = b'12345678'
 
 # ================================
 # اختيار العملية
-choice = input("Type E for Encryption or D for Decryption: ").lower()
+while True:
+    choice = input("Type E for Encryption or D for Decryption: ").lower()
 
+    # ================================
+    # إدخال النص
+    text = input("Enter text: ")
+    plaintext = text.encode()
 
-# ================================
-# إنشاء كائن DES
-des = DES.new(key, DES.MODE_ECB)
+    # ================================
+    # إدخال المفتاح
+    user_key = input("Enter 8-character key (or press Enter for default key): ")
 
-# تشفير
-if choice == 'e':
-    result = des.encrypt(plaintext)
-    print("\nEncrypted text (bytes):", result)
-    print("Encrypted text (hex)  :", result.hex())
+    if user_key == "":
+        key = DEFAULT_KEY
+        print("Using default key: 12345678")
+    else:
+        if len(user_key) != 8:
+            print("Key must be exactly 8 characters!")
+            exit()
+        key = user_key.encode()
 
-# فك التشفير
-elif choice == 'd':
-    result = des.decrypt(plaintext)
-    print("\nDecrypted text:", result.decode())
+    # ================================
+    # إنشاء DES
+    des = DES.new(key, DES.MODE_ECB)
 
-else:
-    print("Invalid choice! Please enter E or D.")
+    # ================================
+    # التشفير
+    if choice == 'e':
+        padded = pad(plaintext, DES.block_size)
+        ciphertext = des.encrypt(padded)
+        print("\nEncrypted (hex):", ciphertext.hex())
 
+    # ================================
+    # فك التشفير
+    elif choice == 'd':
+        try:
+            ciphertext = bytes.fromhex(text)
+            decrypted = des.decrypt(ciphertext)
+            unpadded = unpad(decrypted, DES.block_size)
+            print("\nDecrypted text:", unpadded.decode())
+        except:
+            print("Invalid ciphertext! Enter a valid hex string.")
 
-# ================================
-
-
-from Crypto.Cipher import DES
-from Crypto.Random import get_random_bytes
-
-# لازم طول المفتاح يكون 8 بايت بالظبط
-key = b'12345678'    
-
-# لازم طول النص يكون من مضاعفات 8
-plaintext = b'HelloDES'
-
-# إنشاء كائن التشفير
-des = DES.new(key, DES.MODE_ECB)
-
-# تشفير
-cipher_text = des.encrypt(plaintext)
-print("Encrypted:", cipher_text)
-
-# فك التشفير
-des2 = DES.new(key, DES.MODE_ECB)
-decrypted = des2.decrypt(cipher_text)
-print("Decrypted:", decrypted)
+    else:
+        print("Invalid choice!")
